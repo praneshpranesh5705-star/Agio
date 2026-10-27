@@ -2,9 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
 
 const stats = [
   ["01", "SOIL", "Moisture intelligence"],
@@ -31,23 +28,53 @@ export default function Page() {
       const field = root.querySelector(".field-lines");
       const chips = root.querySelectorAll(".hero-chip");
       const progress = { value: 0 };
+
       const update = () => {
         const w = root.clientWidth;
-        const x = -100 + progress.value * (w + 180);
+        const x = -120 + progress.value * (w + 220);
         gsap.set(tractor, { x });
         gsap.set(field, { xPercent: -18 * progress.value });
         fill.style.clipPath = `inset(0 ${100 - progress.value * 100}% 0 0)`;
       };
+
       gsap.from(chips, { y: 18, opacity: 0, duration: .7, stagger: .12, ease: "power3.out" });
       gsap.from(".hero-copy > *", { y: 28, opacity: 0, duration: .9, stagger: .08, ease: "power3.out", delay: .15 });
+
       const mm = gsap.matchMedia();
       mm.add({ reduce: "(prefers-reduced-motion: reduce)" }, ({ conditions }) => {
-        if (conditions.reduce) { progress.value = 1; update(); return; }
-        gsap.timeline({ scrollTrigger: { trigger: root, start: "top top", end: "+=300%", pin: true, scrub: 1, anticipatePin: 1, invalidateOnRefresh: true, onRefresh: update } })
-          .to(progress, { value: 1, ease: "none", duration: 1, onUpdate: update }, 0)
-          .to(".hero-copy", { y: -30, opacity: .82, ease: "none", duration: 1 }, 0);
+        if (conditions.reduce) {
+          progress.value = .5;
+          update();
+          return;
+        }
+
+        // The tractor now drives automatically across the field and loops forever.
+        // It does not require scrolling. Scroll can still be used normally for the page.
+        gsap.to(progress, {
+          value: 1,
+          duration: 8,
+          ease: "none",
+          repeat: -1,
+          onUpdate: update,
+          onRepeat: () => {
+            progress.value = 0;
+            update();
+          }
+        });
+
+        // Subtle wheel rotation makes the tractor feel like it is actually driving.
+        gsap.to(root.querySelectorAll(".wheel"), {
+          rotation: 360,
+          duration: .7,
+          ease: "none",
+          repeat: -1,
+          transformOrigin: "50% 50%"
+        });
       });
+
       update();
+      window.addEventListener("resize", update);
+      return () => window.removeEventListener("resize", update);
     }, root);
     return () => ctx.revert();
   }, []);
@@ -60,7 +87,7 @@ export default function Page() {
       <div className="hero-copy"><div className="eyebrow">NEXT-GENERATION AGRICULTURE <span>● LIVE FIELD</span></div><h1>GROW<br/><em>SMARTER.</em></h1><p>Where intelligent machines, connected sensors and AI work together to help every field perform better.</p><div className="hero-actions"><a className="primary" href="#technology">Enter the field <b>↓</b></a><a className="ghost" href="#dashboard">View live data</a></div></div>
       <div className="hero-track"><div className="field-lines"/><div className="crop-row row-one"/><div className="crop-row row-two"/><div className="hero-title hero-outline">PRECISION FARMING</div><div className="hero-title hero-fill">PRECISION FARMING</div><Tractor/></div>
       <div className="hero-chips"><span className="hero-chip">AI VISION <b>ON</b></span><span className="hero-chip">SOIL 68%</span><span className="hero-chip">WATER 42%</span></div>
-      <div className="scroll-hint"><span/> SCROLL TO DRIVE THE FARM</div>
+      <div className="scroll-hint"><span/> TRACTOR DRIVING AUTOMATICALLY</div>
     </section>
 
     <section id="technology" className="section technology"><div className="section-kicker">01 / FIELD INTELLIGENCE</div><div className="section-head"><h2>One field.<br/><em>Connected.</em></h2><p>Agio brings the entire farm into one intelligent system — from soil beneath the crop to decisions above it.</p></div><div className="sensor-grid"><Sensor icon="◉" title="SOIL MOISTURE" value="68%" note="Optimal zone"/><Sensor icon="◒" title="TEMPERATURE" value="28.4°C" note="Field average"/><Sensor icon="⌁" title="HUMIDITY" value="74%" note="Stable"/><Sensor icon="✦" title="CROP HEALTH" value="94%" note="AI confidence"/></div></section>
