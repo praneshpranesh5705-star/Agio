@@ -31,7 +31,10 @@ export default function Page() {
 
       const update = () => {
         const w = root.clientWidth;
-        const x = -120 + progress.value * (w + 220);
+        const tractorWidth = window.innerWidth <= 560 ? 104 : 170;
+        const start = 12;
+        const end = Math.max(start, w - tractorWidth - 12);
+        const x = start + progress.value * (end - start);
         gsap.set(tractor, { x });
         gsap.set(field, { xPercent: -18 * progress.value });
         fill.style.clipPath = `inset(0 ${100 - progress.value * 100}% 0 0)`;
@@ -43,26 +46,23 @@ export default function Page() {
       const mm = gsap.matchMedia();
       mm.add({ reduce: "(prefers-reduced-motion: reduce)" }, ({ conditions }) => {
         if (conditions.reduce) {
-          progress.value = .5;
+          progress.value = .35;
           update();
           return;
         }
 
-        // The tractor now drives automatically across the field and loops forever.
-        // It does not require scrolling. Scroll can still be used normally for the page.
+        // Automatic tractor drive: starts fully visible, crosses the complete field,
+        // then smoothly returns instead of jumping back to the left edge.
         gsap.to(progress, {
           value: 1,
-          duration: 8,
-          ease: "none",
+          duration: 6,
+          ease: "power1.inOut",
           repeat: -1,
-          onUpdate: update,
-          onRepeat: () => {
-            progress.value = 0;
-            update();
-          }
+          yoyo: true,
+          onUpdate: update
         });
 
-        // Subtle wheel rotation makes the tractor feel like it is actually driving.
+        // Wheel rotation makes the tractor visibly drive while it crosses the field.
         gsap.to(root.querySelectorAll(".wheel"), {
           rotation: 360,
           duration: .7,
