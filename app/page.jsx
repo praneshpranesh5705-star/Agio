@@ -51,18 +51,18 @@ export default function Page() {
           return;
         }
 
-        // Automatic tractor drive: starts fully visible, crosses the complete field,
-        // then smoothly returns instead of jumping back to the left edge.
+        // Automatic tractor drive: fully visible at both ends, smoothly crossing
+        // the complete field and returning forever. It does not require scrolling.
         gsap.to(progress, {
           value: 1,
-          duration: 6,
+          duration: 10,
           ease: "power1.inOut",
           repeat: -1,
           yoyo: true,
           onUpdate: update
         });
 
-        // Wheel rotation makes the tractor visibly drive while it crosses the field.
+        // Rotating wheels make the tractor visibly drive.
         gsap.to(root.querySelectorAll(".wheel"), {
           rotation: 360,
           duration: .7,
